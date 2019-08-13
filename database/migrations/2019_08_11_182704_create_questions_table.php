@@ -20,7 +20,7 @@ class CreateQuestionsTable extends Migration
             $table->text('body');
             $table->unsignedBigInteger('views')->default(0);
             $table->unsignedBigInteger('answers')->default(0);
-            $table->bigInteger('votes');
+            $table->bigInteger('votes')->default(0);
             $table->unsignedBigInteger('best_answer_id')->nullable();
             $table->unsignedBigInteger('user_id');
             $table->timestamps();
