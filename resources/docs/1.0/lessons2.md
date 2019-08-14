@@ -17,8 +17,6 @@
 
 `1` - Edit ``
 
-
-
 <a name="section-6"></a>
 
 ## Episode-16 Updating The Question - Part 2 of 2
@@ -93,3 +91,51 @@
     }
 ...
 ```
+
+<a name="section-7"></a>
+
+## Episode-17 Deleting The Question
+
+`1` - Edit `resources/views/questions/index.blade.php`
+
+```php
+...
+<div class="ml-auto">
+    ... // edit button
+    <form class="form-delete" method="post" action="{ { route('questions.destroy', $question->id) } }">
+        @ method('DELETE')
+        @ csrf
+        <button type="submit" class="btn btn-outline-danger btn-sm" onclick="return confirm('Are you sure?')">Delete</button>
+    </form>
+</div>
+...
+```
+
+`2` - Edit `app/Http/Controllers/QuestionController.php`
+
+```php
+...
+    public function destroy(Question $question)
+    {
+        $question->delete();
+
+        return redirect('/questions')->with('success', 'Your question has been deleted');
+    }
+...
+```
+
+`3` - Edit `resources/sass/app.scss`
+
+```css
+...
+form.form-delete {
+    display: inline;
+}
+```
+
+`4` - Run npm command
+
+```command
+npm run watch
+```
+
