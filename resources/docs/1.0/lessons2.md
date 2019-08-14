@@ -139,3 +139,102 @@ form.form-delete {
 npm run watch
 ```
 
+<a name="section-8"></a>
+
+## Episode-18 Showing The Question detail
+
+`1` - Edit `routes/web.php`
+
+```php
+...
+Route::resource('questions', 'QuestionController')->except('show');
+Route::get('/questions/{slug}', 'QuestionController@show')->name('questions.show');
+...
+```
+
+`2` - Edit  `app/Providers/RouteServiceProvider.php`
+
+```php
+use App\Question;
+...
+    public function boot()
+    {
+        Route::bind('slug', function ($slug) {
+            return Question::where('slug', $slug)->first() ?? abort(404);
+        });
+        ...
+    }
+...
+```
+
+`3` - Edit `app/Question.php`
+
+- change getUrlAttibute param to slug
+
+```php
+...
+public function getUrlAttribute()
+    {
+        return route("questions.show", $this->slug);
+    }
+...
+```
+
+`4` - Edit `app/Http/Controllers/QuestionController.php`
+
+```php
+...
+public function show(Question $question)
+    {
+        $question->increment('views');
+
+        return view('questions.show', compact('question'));
+    }
+...
+```
+
+`5` - Create new file `show.blade.php` into `resources/views/questions`
+
+`6` - Edit  `resources/views/questions/show.blade.php`
+
+```php
+@ extends('layouts.app')
+
+@ section('content')
+
+<div class="container">
+    <div class="row justify-content-center">
+        <div class="col-md-12">
+            <div class="card">
+                <div class="card-header">
+                    <div class="d-flex align-items-center">
+                        <h1>{ { $question->title } }</h1>
+                        <div class="ml-auto">
+                            <a href="{ { route('questions.index') } }" class="btn btn-outline-secondary">
+                                Back to all questions
+                            </a>
+                        </div>
+                    </div>
+                </div>
+                <div class="card-body">
+                    { !! $question->body_html !! }
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+@ endsection
+```
+
+`7` - Edit `app/Question.php`
+
+- create a new accessor `getBodyHtmlAttribute`
+
+```php
+...
+public function getBodyHtmlAttribute()
+    {
+        return \Parsedown::instance()->text($this->body);
+    }
+...
+```
