@@ -101,8 +101,8 @@ $factory->define(Question::class, function (Faker $faker) {
 
 ```php
 ...
-<div class="status {{ $question->status }}">
-    <strong>{{ $question->answers_count }}</strong> {{ str_plural('answer', $question->answers_count) }}
+<div class="status { { $question->status } }">
+    <strong>{ { $question->answers_count } }</strong> { { str_plural('answer', $question->answers_count) } }
 </div>
 ...
 ```
@@ -165,4 +165,88 @@ php artisan make:migration rename_answers_in_questions_table --table=questions
 
 ```command
 composer require doctrine/dbal
+```
+
+<a name="section-2"></a>
+
+## Episode-22 Generating Fake Answers - Part 1 of 2
+
+`1` - Create new factory file `AnswerFactory`
+
+```command
+php artisan make:factory AnswerFactory
+```
+
+`2` - Edit `database/factories/AnswerFactory.php`
+
+```php
+<?php
+use App\User;
+use App\Answer;
+use Faker\Generator as Faker;
+
+$factory->define(Answer::class, function (Faker $faker) {
+    return [
+        'body' => $faker->paragraph(rand(3, 7), true),
+        'user_id' => User::pluck('id')->random(),
+        'votes_count' => rand(0, 5)
+    ];
+});
+```
+
+`3` - Edit `database/seeds/DatabaseSeeder.php`
+
+```php
+<?php
+
+use App\Answer;
+...
+class DatabaseSeeder extends Seeder
+{
+    public function run()
+    {
+        factory(User::class, 3)->create()->each(function ($user) {
+            $user->questions()
+                ->saveMany(
+                    factory(Question::class, rand(3, 5))->make()
+                )
+                ->each(function ($question) {
+                    $question->answers()
+                        ->saveMany(
+                            factory(Answer::class, rand(1, 5))->make()
+                        );
+                });
+        });
+    }
+}
+```
+
+`4` - `app/Answer.php`
+
+```php
+...
+    public static function boot()
+    {
+        parent::boot();
+
+        static::created(function ($answer) {
+            $answer->question->increment('answers_count');
+        });
+    }
+...
+```
+
+`5` - Edit `database/factories/QuestionFactory.php`
+
+- commented `answers_count` column
+
+```php
+...
+$factory->define(Question::class, function (Faker $faker) {
+    return [
+        ..
+        // 'answers_count' => rand(0, 10),
+        ...
+    ];
+});
 ```

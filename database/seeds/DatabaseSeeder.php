@@ -1,6 +1,7 @@
 <?php
 
 use App\User;
+use App\Answer;
 use App\Question;
 use Illuminate\Database\Seeder;
 
@@ -18,7 +19,13 @@ class DatabaseSeeder extends Seeder
             $user->questions()
                 ->saveMany(
                     factory(Question::class, rand(3, 5))->make()
-                );
+                )
+                ->each(function ($question) {
+                    $question->answers()
+                        ->saveMany(
+                            factory(Answer::class, rand(1, 5))->make()
+                        );
+                });
         });
     }
 }
