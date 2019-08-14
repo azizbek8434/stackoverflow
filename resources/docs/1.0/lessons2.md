@@ -308,3 +308,100 @@ public function destroy(Question $question)
 @ endauth
 ...
 ```
+
+<a name="section-10"></a>
+
+## Episode-20 Authorizing The Question - Using Policies
+
+`1` - create new policy file `QuestionPolicy`
+
+```command
+php artisan make:policy QuestionPolicy --model=Question
+```
+
+`2` - Edit `app/Policies/QuestionPolicy.php`
+
+```php
+<?php
+
+namespace App\Policies;
+
+use App\User;
+use App\Question;
+use Illuminate\Auth\Access\HandlesAuthorization;
+
+class QuestionPolicy
+{
+    use HandlesAuthorization;
+
+    public function update(User $user, Question $question)
+    {
+        return $user->id === $question->user_id;
+    }
+
+    public function delete(User $user, Question $question)
+    {
+        return $user->id === $question->user_id && $question->answers < 1;
+    }
+    ...
+}
+```
+
+`3` - Edit `app/Providers/AuthServiceProvider.php`
+
+- registering new policy `QuestionPolicy`
+
+```php
+...
+    protected $policies = [
+        'App\Question' => 'App\Policies\QuestionPolicy',
+    ];
+...
+```
+
+`4` - Edit `app/Http/Controllers/QuestionController.php`
+
+- using policy in a controller
+
+```php
+...
+public function __construct()
+{
+    $this->middleware('auth')->except('index', 'show');
+}
+...
+
+public function edit(Question $question)
+{
+    $this->authorize('update', $question);
+    return view('questions.edit', compact('question'));
+}
+...
+
+public function destroy(Question $question)
+{
+    $this->authorize('delete', $question);
+    ...
+}
+...
+```
+
+`5` - Edit `resources/views/questions/index.blade.php`
+
+- using Policy in a view
+
+```php
+...
+@ can('update', $question)
+        <a href="{ { route('questions.edit', $question->id) } }"
+            class="btn btn-outline-info btn-sm">Edit</a>
+@ endcan
+@ can('delete', $question)
+        <form class="form-delete" method="post" action="{ { route('questions.destroy', $question->id) } }">
+            @ method('DELETE')
+            @ csrf
+            <button type="submit" class="btn btn-outline-danger btn-sm" onclick="return confirm('Are you sure?')">Delete</button>
+        </form>
+@ endcan
+...
+```
