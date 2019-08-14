@@ -238,3 +238,73 @@ public function getBodyHtmlAttribute()
     }
 ...
 ```
+
+<a name="section-9"></a>
+
+## Episode-19 Authorizing The Question - Using Gates
+
+`1` - Edit `app/Providers/AuthServiceProvider.php`
+
+```php
+use Illuminate\Support\Facades\Gate;
+...
+    public function boot()
+    {
+        $this->registerPolicies();
+
+        Gate::define('update-question', function ($user, $question) {
+            return $user->id === $question->user_id;
+        });
+
+        Gate::define('delete-question', function ($user, $question) {
+            return $user->id === $question->user_id;
+        });
+    }
+...
+```
+
+`2` - Edit `app/Http/Controllers/QuestionController.php`
+
+- using gates in the controller
+
+```php
+...
+public function edit(Question $question)
+{
+    if (\Gate::denies('update-question', $question)) {
+        abort('403', 'Access denied');
+    }
+    return view('questions.edit', compact('question'));
+}
+
+...
+public function destroy(Question $question)
+{
+    if (\Gate::denies('delete-question', $question)) {
+            abort('403', 'Access denied');
+    }
+    ...
+}
+```
+
+`3` - Edit `resources/views/questions/index.blade.php`
+
+- using gates in the view
+
+```php
+...
+@ auth
+@ if(Auth::user()->can('update-question', $question))
+    <a href="{ { route('questions.edit', $question->id) } }"
+        class="btn btn-outline-info btn-sm">Edit</a>
+@ endif
+@ if(Auth::user()->can('delete-question', $question))
+    <form class="form-delete" method="post" action="{ { route('questions.destroy', $question->id) } }">
+        @ method('DELETE')
+        @ csrf
+        <button type="submit" class="btn btn-outline-danger btn-sm" onclick="return confirm('Are you sure?')">Delete</button>
+    </form>
+@ endif
+@ endauth
+...
+```
