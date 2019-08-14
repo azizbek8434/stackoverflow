@@ -1,0 +1,4 @@
+- ## Get Started
+    - [Overview](/{{route}}/{{version}}/overview)
+    - [Episodes 1-10](/{{route}}/{{version}}/lessons1)
+    - [Episodes 11-20](/{{route}}/{{version}}/lessons2)
