@@ -139,8 +139,8 @@ protected $policies = [
                         @ csrf
                         @ method('PATCH')
                         <div class="form-group">
-                            <textarea class="form-control {{ $errors->has('body') ? 'is-invalid' : '' }}" name="body" rows="7">
-                            {{ old('body', $answer->body) }}</textarea>
+                            <textarea class="form-control { { $errors->has('body') ? 'is-invalid' : '' } }" name="body" rows="7">
+                            { { old('body', $answer->body) } }</textarea>
                             @ if($errors->has('body'))
                             <div class="invalid-feedback">
                                 <strong>{ { $errors->first('body') } }</strong>
@@ -224,7 +224,7 @@ public function getStatusAttribute()
 
 ```php
 ...
-<a title="Mark this answer as best answer" class="{{ $answer->status }} mt-2">
+<a title="Mark this answer as best answer" class="{ { $answer->status } } mt-2">
 ...
 ```
 
