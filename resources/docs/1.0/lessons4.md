@@ -227,3 +227,55 @@ public function getStatusAttribute()
 <a title="Mark this answer as best answer" class="{{ $answer->status }} mt-2">
 ...
 ```
+
+<a name="section-5"></a>
+
+## Episode-35 Deleting The Answer - Part 3 of 3
+
+- Update best_answer_id to `null` on questions table when an answer removed `second method`
+
+`1` - Create new migration file `add_foregin_best_answer_id_to_questions_table`
+
+```command
+php artisan make:migration add_foregin_best_answer_id_to_questions_table --table=questions
+```
+
+`2` - Edit `database/migrations/add_foregin_best_answer_id_to_questions_table.php`
+
+```php
+...
+public function up()
+{
+    Schema::table('questions', function(Blueprint $table){
+        $table->foreign('best_answer_id')
+            ->references('id')
+            ->on('answers')
+            ->onDelete('SET NULL');
+    });
+
+
+    public function down()
+    {
+        Schema::table('questions', function(Blueprint $table){
+            $table->dropForeign(['best_answer_id']);
+        });
+    }
+}
+...
+```
+
+`3` - Edit `app/Answer.php`
+
+```php
+...
+ static::deleted(function ($answer) {
+    $answer->question->decrement('answers_count');
+});
+...
+```
+
+`3` - Run artisan command
+
+```command
+php artisan migrate
+```
