@@ -139,8 +139,8 @@ protected $policies = [
                         @ csrf
                         @ method('PATCH')
                         <div class="form-group">
-                            <textarea class="form-control { { $errors->has('body') ? 'is-invalid' : '' } }" name="body"
-                                rows="7" value="{ { old('body', $answer->body) } }"></textarea>
+                            <textarea class="form-control {{ $errors->has('body') ? 'is-invalid' : '' }}" name="body" rows="7">
+                            {{ old('body', $answer->body) }}</textarea>
                             @ if($errors->has('body'))
                             <div class="invalid-feedback">
                                 <strong>{ { $errors->first('body') } }</strong>
@@ -191,5 +191,39 @@ public function destroy(Question $question, Answer $answer)
             $answer->question->decrement('answers_count');
         });
     }
+...
+```
+
+<a name="section-4"></a>
+
+## Episode-34 Deleting The Answer - Part 2 of 3
+
+`1` - Edit `app/Answer.php`
+
+```php
+...
+ static::deleted(function ($answer) {
+    $question = $answer->question;
+
+    $question->decrement('answers_count');
+
+    if ($question->best_answer_id === $answer->id) {
+        $question->best_answer_id = NULL;
+        $question->save();
+    }
+});
+...
+public function getStatusAttribute()
+{
+    return $this->id === $this->question->best_answer_id ? 'vote-accepted' : 'vote-accept';
+}
+...
+```
+
+`2` - Edit `resources/views/answers/_index.blade.php`
+
+```php
+...
+<a title="Mark this answer as best answer" class="{{ $answer->status }} mt-2">
 ...
 ```
