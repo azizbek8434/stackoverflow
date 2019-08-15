@@ -10,3 +10,4 @@
 - ## Building Answers Resource
 
     - [Episodes 21-30](/{{route}}/{{version}}/lessons3)
+    - [Episodes 31-35](/{{route}}/{{version}}/lessons4)
