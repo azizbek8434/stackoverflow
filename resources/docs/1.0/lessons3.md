@@ -375,9 +375,9 @@ public function getAvatarAttribute()
                 <div class="card-body">
                     <div class="card-title">
                         <div class="d-flex align-items-center">
-                            <h1>{ { $question->title }}</h1>
+                            <h1>{ { $question->title } }</h1>
                             <div class="ml-auto">
-                                <a href="{ { route('questions.index') }}" class="btn btn-outline-secondary">
+                                <a href="{ { route('questions.index') } }" class="btn btn-outline-secondary">
                                     Back to all questions
                                 </a>
                             </div>
@@ -401,13 +401,13 @@ public function getAvatarAttribute()
                         <div class="media-body">
                             { !! $question->body_html !! }
                             <div class="float-right">
-                                <span class="text-muted">Answered: { {  $question->created_date }}</span>
+                                <span class="text-muted">Answered: { {  $question->created_date } }</span>
                                 <div class="media mt-2">
-                                    <a href="{ { $question->user->url }}" class="pr-2">
-                                        <img src="{ { $question->user->avatar }}" alt="avatar">
+                                    <a href="{ { $question->user->url } }" class="pr-2">
+                                        <img src="{ { $question->user->avatar } }" alt="avatar">
                                     </a>
                                     <div class="media-body mt-1">
-                                        <a href="{ { $question->user->url }}">{ { $question->user->name }}</a>
+                                        <a href="{ { $question->user->url } }">{ { $question->user->name } }</a>
                                     </div>
                                 </div>
                             </div>
@@ -422,7 +422,7 @@ public function getAvatarAttribute()
             <div class="card">
                 <div class="card-body">
                     <div class="card-title">
-                        <h2>{ { $question->answers_count ." ". str_plural("Answer", $question->answers_count) }}</h2>
+                        <h2>{ { $question->answers_count ." ". str_plural("Answer", $question->answers_count) } }</h2>
                     </div>
                     <hr>
                     @ foreach ($question->answers as $answer)
@@ -545,4 +545,191 @@ require('./fontawesome')
 
 ```command
 npm run watch
+```
+
+<a name="section-8"></a>
+
+## Episode-28 Saving The Answer - Part 1 of 3
+
+`1` - Edit `resources/views/questions/show.blade.php`
+
+```php
+...
+<div class="container">
+    <div class="row justify-content-center">
+    ...
+    </div>
+    @ include('answers._index',[
+        'answers' => $question->answers,
+        'answersCount' => $question->answers_count
+    ])
+</div>
+...
+```
+
+`2` - Create new folder `answers` into `resources/views`
+
+`3` - Create new file `_index.blade.php` into `resources/views/answers`
+
+`4` - Edit `resources/views/answers/_index.blade.php`
+
+```php
+<div class="row mt-3">
+    <div class="col-md-12">
+        <div class="card">
+            <div class="card-body">
+                <div class="card-title">
+                    <h2>{ { $answersCount ." ". str_plural("Answer", $answersCount) } }</h2>
+                </div>
+                <hr>
+                @ foreach ($answers as $answer)
+                <div class="media">
+                    <div class="d-flex flex-column vote-controls">
+                        <a title="This answer is useful" class="vote-up">
+                            <i class="fas fa-caret-up fa-3x"></i>
+                        </a>
+                        <span class="vote-count">1234</span>
+                        <a title="This answer is not useful" class="vote-down off">
+                            <i class="fas fa-caret-down fa-3x"></i>
+                        </a>
+                        <a title="Mark this answer as best answer" class="vote-accept mt-2">
+                            <i class="fas fa-check fa-2x"></i>
+                        </a>
+                    </div>
+                    <div class="media-body">
+                        { !! $answer->body_html !! }
+                        <div class="float-right">
+                            <span class="text-muted">Answered: { {  $answer->created_date } }</span>
+                            <div class="media mt-2">
+                                <a href="{ { $answer->user->url } }" class="pr-2">
+                                    <img src="{ { $answer->user->avatar } }" alt="avatar">
+                                </a>
+                                <div class="media-body mt-1">
+                                    <a href="{ { $answer->user->url } }">{ { $answer->user->name } }</a>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <hr>
+                @ endforeach
+            </div>
+        </div>
+    </div>
+</div>
+```
+
+<a name="section-9"></a>
+
+## Episode-29 Saving The Answer - Part 2 of 3
+
+`1` - Create new file `_create.blade.php` into `resources/views/answers`
+
+`2` - Edit `resources/views/answers/_create.blade.php`
+
+```php
+<div class="row mt-3">
+    <div class="col-md-12">
+        <div class="card">
+            <div class="card-body">
+                <div class="card-title">
+                    <h2>Your Answer</h2>
+                </div>
+                <hr>
+                <form method="post" action="">
+                    @ csrf
+                    <div class="form-group">
+                        <textarea class="form-control" name="body" rows="7"></textarea>
+                    </div>
+                    <div class="form-group">
+                    <button type="submit" class="btn btn-outline-primary btn-lg">Submit</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+```
+
+`3` - Edit `resources/views/questions/show.blade.php`
+
+```php
+<div class="container">
+...
+@ include('answers._create')
+</div>
+...
+```
+
+`4` - Edit `routes/web.php`
+
+```php
+...
+Route::resource('questions.answers', 'AnswerController')->except(['index', 'create', 'show']);
+...
+```
+
+`5` - Create new controller `AnswerController`
+
+```command
+php artisan make:controller AnswerController -r -m Answer
+```
+
+`6` - Edit `app/Http/Controllers/AnswerController.php`
+
+```php
+use App\Question;
+...
+  public function store(Question $question, Request $request)
+    {
+        $question->answers()->create($request->validate([
+            'body' => 'required'
+        ]) + [
+            'user_id' => \Auth::id()
+        ]);
+        return back()->with('success', 'Your answer has been submitted successfuly');
+    }
+...
+```
+
+<a name="section-10"></a>
+
+## Episode-30 Saving The Answer - Part 3 of 3
+
+`1` - Edit `resources/views/answers/_index.blade.php`
+
+```php
+...
+<div class="card">
+    @ include('layouts._message') //include flash message file
+...
+</div>
+...
+```
+
+`2` - Edit `resources/views/answers/_create.blade.php`
+
+```php
+...
+<form method="post" action="{ { route('questions.answers.store', $question->id) } }">
+@ csrf
+<div class="form-group">
+    <textarea class="form-control { { $errors->has('body') ? 'is-invalid' : '' } }" name="body" rows="7"></textarea>
+    @ if($errors->has('body'))
+        <div class="invalid-feedback">
+            <strong>{ { $errors->first('body') } }</strong>
+        </div>
+    @ endif
+</div>
+...
+</form>
+...
+```
+
+`3` - Edit `app/Answer.php`
+
+```php
+...
+protected $fillable = ['body', 'user_id'];
+...
 ```
