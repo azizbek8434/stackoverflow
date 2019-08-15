@@ -359,3 +359,190 @@ public function getAvatarAttribute()
     }
 ...
 ```
+
+<a name="section-5"></a>
+
+## Episode-25 Adding Vote Controls on Question and Answer - Part 1 of 3
+
+`1` - Edit `resources/views/questions/show.blade.php`
+
+```php
+...
+<div class="container">
+    <div class="row justify-content-center">
+        <div class="col-md-12">
+            <div class="card">
+                <div class="card-body">
+                    <div class="card-title">
+                        <div class="d-flex align-items-center">
+                            <h1>{ { $question->title }}</h1>
+                            <div class="ml-auto">
+                                <a href="{ { route('questions.index') }}" class="btn btn-outline-secondary">
+                                    Back to all questions
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                    <hr>
+                    <div class="media">
+                        <div class="d-flex flex-column vote-controls">
+                            <a title="This question is useful" class="vote-up">
+                            <i class="fas fa-caret-up fa-3x"></i>
+                            </a>
+                            <span class="vote-count">1234</span>
+                            <a title="This question is not useful" class="vote-down off">
+                                <i class="fas fa-caret-down fa-3x"></i>
+                            </a>
+                            <a title="Click to mark favorite question (Click agan to undo)" class="favorite mt-2 favorited">
+                                <i class="fas fa-star fa-2x"></i>
+                                <span class="favorites-count">123</span>
+                            </a>
+                        </div>
+                        <div class="media-body">
+                            { !! $question->body_html !! }
+                            <div class="float-right">
+                                <span class="text-muted">Answered: { {  $question->created_date }}</span>
+                                <div class="media mt-2">
+                                    <a href="{ { $question->user->url }}" class="pr-2">
+                                        <img src="{ { $question->user->avatar }}" alt="avatar">
+                                    </a>
+                                    <div class="media-body mt-1">
+                                        <a href="{ { $question->user->url }}">{ { $question->user->name }}</a>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="row mt-3">
+        <div class="col-md-12">
+            <div class="card">
+                <div class="card-body">
+                    <div class="card-title">
+                        <h2>{ { $question->answers_count ." ". str_plural("Answer", $question->answers_count) }}</h2>
+                    </div>
+                    <hr>
+                    @ foreach ($question->answers as $answer)
+                    <div class="media">
+                        <div class="d-flex flex-column vote-controls">
+                            <a title="This answer is useful" class="vote-up">
+                            <i class="fas fa-caret-up fa-3x"></i>
+                            </a>
+                            <span class="vote-count">1234</span>
+                            <a title="This answer is not useful" class="vote-down off">
+                                <i class="fas fa-caret-down fa-3x"></i>
+                            </a>
+                            <a title="Mark this answer as best answer" class="vote-accept mt-2">
+                                <i class="fas fa-check fa-2x"></i>
+                            </a>
+                        </div>
+                    ..... // some codes
+                    </div>
+                    <hr>
+                    @ endforeach
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+```
+
+<a name="section-6"></a>
+
+## Episode-26 Adding Vote Controls on Question and Answer - Part 2 of 3
+
+`1` - Installing fontawesome using `npm`
+
+```command
+npm i @fortawesome/fontawesome @fortawesome/fontawesome-free-solid -D
+```
+
+`2` - Create new file `fontawesome.js` into `resources/js`
+
+`3` - Edit `resources/js/fontawesome.js`
+
+```js
+import fontawesome from '@fortawesome/fontawesome';
+import faCaretUp from '@fortawesome/fontawesome-free-solid/faCaretUp';
+import faCaretDown from '@fortawesome/fontawesome-free-solid/faCaretDown';
+import faStar from '@fortawesome/fontawesome-free-solid/faStar';
+import faCheck from '@fortawesome/fontawesome-free-solid/faCheck';
+
+fontawesome.library.add([faCaretUp, faCaretDown, faStar, faCheck]);
+
+```
+
+`4` - Edit `resources/js/app.js`
+
+```js
+...
+require('./fontawesome')
+...
+```
+
+<a name="section-7"></a>
+
+## Episode-27 Adding Vote Controls on Question and Answer - Part 3 of 3
+
+`1` - Edit `resources/sass/app.scss`
+
+```css
+...
+.vote-controls {
+    min-width: 60px;
+    margin-right: 30px;
+    text-align: center;
+    color: $gray-700;
+
+    span,
+    a {
+        display: block;
+    }
+
+    span {
+        &.votes-count {
+            font-size: 25px;
+        }
+
+        &.favorites-count {
+            font-size: 12px;
+        }
+    }
+
+    a {
+        cursor: pointer;
+        color: $gray-600;
+
+        &.off,
+        &.off:hover {
+            color: $gray-500;
+        }
+
+        &.favorite {
+
+            &.favorited,
+            &.favorited:hover {
+                color: $orange;
+            }
+        }
+
+        &.vote-accept {
+            color: $gray-300;
+        }
+
+        &.vote-accepted {
+            color: $green;
+        }
+    }
+}
+...
+```
+
+`2` - run npm command
+
+```command
+npm run watch
+```
