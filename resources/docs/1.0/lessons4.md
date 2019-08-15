@@ -160,3 +160,36 @@ protected $policies = [
 </div>
 @ endsection
 ```
+
+<a name="section-3"></a>
+
+## Episode-33 Deleting The Answer - Part 1 of 3
+
+`1` - Edit `app/Http/Controllers/AnswerController.php`
+
+```php
+...
+public function destroy(Question $question, Answer $answer)
+    {
+        $this->authorize('delete', $answer);
+
+        $answer->delete();
+
+        return back()->with('success', 'Your answer has been removed');
+    }
+...
+```
+
+`2`- Edit `app/Answer.php`
+
+```php
+...
+    public static function boot()
+    {
+        ...
+        static::deleted(function ($answer) {
+            $answer->question->decrement('answers_count');
+        });
+    }
+...
+```
