@@ -10,6 +10,8 @@
 - [43-Voting The Question & Answer - Part 2 of 6](#section-8)
 - [44-Voting The Question & Answer - Part 3 of 6](#section-9)
 - [45-Voting The Question & Answer - Part 4 of 6](#section-10)
+- [46-Voting The Question & Answer - Part 5 of 6](#section-11)
+- [47-Voting The Question & Answer - Part 6 of 6](#section-12)
 
 <a name="section-1"></a>
 
@@ -377,5 +379,361 @@ action="/questions/{ { $question->id } }/favorites" style="display:none;">
 @ if($question->is_favorited)
     @ method('DELETE');
 @ endif
+...
+```
+<a name="section-7"></a>
+
+## Episode-42 Voting The Question & Answer - Part 1 of 6
+
+`1` - Create new migration file `create_votables_table`
+
+```command
+php artisan make:migration create_votables_table
+```
+
+`2` - Edit `database/migrations/2019_08_16_094119_create_votables_table.php`
+
+```php
+<?php
+
+use Illuminate\Support\Facades\Schema;
+use Illuminate\Database\Schema\Blueprint;
+use Illuminate\Database\Migrations\Migration;
+
+class CreateVotablesTable extends Migration
+{
+    public function up()
+    {
+        Schema::create('votables', function (Blueprint $table) {
+            $table->unsignedBigInteger('user_id');
+            $table->unsignedBigInteger('votable_id');
+            $table->string('votable_type');
+            $table->tinyInteger('vote')->comment('-1: down vote, 1: up vote');
+            $table->timestamps();
+            $table->unique(['user_id', 'votable_id', 'votable_type']);
+        });
+    }
+
+    public function down()
+    {
+        Schema::dropIfExists('votables');
+    }
+}
+```
+
+`3` - Edit  `app/User.php`
+
+```php
+...
+public function voteQuestions()
+{
+    return $this->morphedByMany(Question::class, 'votable');
+}
+
+public function voteAnswers()
+{
+    return $this->morphedByMany(Answer::class, 'votable');
+}
+...
+```
+
+`4` - Edit `app/Question.php`
+
+```php
+...
+public function votes()
+{
+    return $this->morphToMany(User::class, 'votable');
+}
+```
+
+`5` - Edit `app/Answer.php`
+
+```php
+...
+public function votes()
+{
+    return $this->morphToMany(User::class, 'votable');
+}
+...
+```
+
+<a name="section-8"></a>
+
+## Episode-43 Voting The Question & Answer - Part 2 of 6
+
+`1` - Edit `database/factories/QuestionFactory.php`
+
+```php
+...
+// 'votes' => rand(-3, 5) change votes name to => votes_count
+'votes_count' => rand(-3, 5)
+...
+```
+
+`2` - Edit `resources/views/questions/index.blade.php`
+
+```php
+...
+// <strong>{ { $question->votes } }</strong> { { str_plural('vote', $question->votes) } } change votes name to => votes_count
+<strong>{ { $question->votes_count } }</strong> { { str_plural('vote', $question->votes_count) } }
+...
+```
+
+`3` - Create new migration file `rename_votes_on_questions_table`
+
+```command
+php artisan make:migration rename_votes_on_questions_table --table=questions
+```
+
+`4` - Edit `database/migrations/2019_08_16_100432_rename_votes_on_questions_table.php`
+
+```php
+...
+class RenameVotesOnQuestionsTable extends Migration
+{
+    public function up()
+    {
+        Schema::table('questions', function (Blueprint $table) {
+            $table->renameColumn('votes', 'votes_count');
+        });
+    }
+    public function down()
+    {
+        Schema::table('questions', function (Blueprint $table) {
+            $table->renameColumn('votes_count', 'votes');
+        });
+    }
+}
+```
+
+`5` - Run artisan command
+
+```command
+php artisan migrate
+```
+
+`6` - Test relations using `tinker`
+
+```command
+# 1-go to tinker
+php artisan tinker
+
+# 2-create new 2 users variables
+$u1 = App\User::find(1);
+$u2 = App\User::find(2);
+
+# 3-create new 2 questions variables
+$q1 = App\Question::find(1);
+$q2 = App\Question::find(2);
+
+# 4-create new 2 answer variables
+$a1 = $q1->answers->first();
+$a2 = $q2->answers->first();
+
+# 5-attach user to answer
+$u1->voteQuestions()->attach($q1, ['vote' => 1]);
+
+# 6-check the user has votes
+#u1->voteQuestions()->where('votable_id', $q1->id);
+
+# 7-get collection of user's votes
+$u1->voteQuestions;
+
+# 8-updateing the user votes
+$u1->voteQuestions()->updateExistingPivot($q1, ['vote' => -1]);
+
+# 9-getting questions votes
+$q1->votes;
+
+# 10-getting questions votes with pivot
+$q1->votes()->withPivot('vote')->get();
+```
+
+<a name="section-9"></a>
+
+## Episode-44 Voting The Question & Answer - Part 3 of 6
+
+`1` - Edit `app/User.php`
+
+```php
+...
+public function voteQuestion(Question $question, $vote)
+{
+   $voteQuestions = $this->voteQuestions();
+
+    if ($voteQuestions->where('votable_id', $question->id)->exists()) {
+        $voteQuestions->updateExistingPivot($question, ['vote' => $vote]);
+    } else {
+        $voteQuestions->attach($question, ['vote' => $vote]);
+    }
+    $question->load('votes');
+
+    $upVotes = (int) $question->upVotes()->sum('vote');
+
+    $downVotes = (int) $question->downVotes()->sum('vote');
+
+    $question->votes_count = $upVotes + $downVotes;
+
+    $question->save();
+}
+...
+```
+
+`2` - Edit `app/Question.php`
+
+```php
+...
+   public function upVotes()
+    {
+        return $this->votes()->wherePivot('vote', 1);
+    }
+
+    public function downVotes()
+    {
+        return $this->votes()->wherePivot('vote', -1);
+    }
+...
+```
+
+<a name="section-10"></a>
+
+## Episode-45 Voting The Question & Answer - Part 4 of 6
+
+`1` - Create new seeder file `VotablesTableSeeder`
+
+```command
+php artisan make:seeder VotablesTableSeeder
+```
+
+`2` - Edit `database/seeds/DatabaseSeeder.php`
+
+```php
+...
+    public function run()
+    {
+        $this->call([
+            ...
+            VotablesTableSeeder::class
+        ]);
+    }
+...
+```
+
+`3` - Edit `database/seeds/VotablesTableSeeder.php`
+
+```php
+<?php
+
+use App\User;
+use App\Question;
+use Illuminate\Database\Seeder;
+use Illuminate\Support\Facades\DB;
+
+class VotablesTableSeeder extends Seeder
+{
+    public function run()
+    {
+        DB::table('votables')->where('votable_type', 'App\Question')->delete();
+        $users = User::all();
+        $numberOfUser = $users->count();
+        $votes = [1, -1];
+
+        foreach (Question::all() as $question) {
+            for ($i = 0; $i < rand(1, $numberOfUser); $i++) {
+                $user = $users[$i];
+                $user->voteQuestion($question, $votes[rand(0, 1)]);
+            }
+        }
+    }
+}
+```
+
+`4` - Edit `database/factories/QuestionFactory.php`
+
+- comment `votes_count` line
+
+```php
+...
+$factory->define(Question::class, function (Faker $faker) {
+    return [
+       ...
+        // 'votes_count' => rand(-3, 5)
+    ];
+});
+...
+```
+
+`5` - Run artisan seed command for `VotablesTableSeeder` class
+
+```command
+php artisan db:seed --class=VotablesTableSeeder
+```
+
+<a name="section-11"></a>
+
+## Episode-46 Voting The Question & Answer - Part 5 of 6
+
+`1` - Create new controller file `VoteQuestionController` this will be `invokable`
+
+```command
+php artisan make:controller VoteQuestionController
+```
+
+`2` - Edit `app/Http/Controllers/VoteQuestionController.php`
+
+```php
+<?php
+
+namespace App\Http\Controllers;
+
+use App\Question;
+use Illuminate\Http\Request;
+
+class VoteQuestionController extends Controller
+{
+    public function __construct()
+    {
+        $this->middleware('auth');
+    }
+
+    public function __invoke(Question $quesion)
+    {
+        $vote = (int) request()->vote;
+        auth()->user()->voteQuestion($quesion, $vote);
+
+        return back();
+    }
+}
+```
+
+`3` - Edit `routes/web.php`
+
+```php
+...
+Route::post('/questions/{question/vote}', 'VoteQuestionController');
+...
+```
+
+`4` - Edit `resources/views/questions/show.blade.php`
+
+```php
+...
+<a title="This question is useful" class="vote-up { { Auth::guest() ? 'off' : '' } }"
+    onclick="event.preventDefault(); document.getElementById('vote-up-question-{ { $question->id } }').submit();">
+    <i class="fas fa-caret-up fa-3x"></i>
+</a>
+<form id="vote-up-question-{ { $question->id } }" method="POST" action="/questions/{ { $question->id } }/vote" style="display:none;">
+    @ csrf
+    <input type="hidden" name="vote" value="1">
+</form>
+<span class="vote-count">{ { $question->votes_count } }</span>
+<a title="This question is not useful" class="vote-down { { Auth::guest() ? 'off' : '' } }" onclick="event.preventDefault(); document.getElementById('vote-down-question-{ { $question->id } }').submit();">
+    <i class="fas fa-caret-down fa-3x"></i>
+</a>
+<form id="vote-down-question-{ { $question->id } }" method="POST" action="/questions/{ { $question->id } }/vote" style="display:none;">
+    @ csrf
+    <input type="hidden" name="vote" value="-1">
+</form>
 ...
 ```
