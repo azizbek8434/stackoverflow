@@ -141,3 +141,241 @@ protected function isBest()
 }
 ...
 ```
+
+<a name="section-3"></a>
+
+## Episode-38 Favoriting The Question - Part 1 of 4
+
+`1` -  Create new migration file `create_favorites_table`
+
+```command
+php artisan make:migration create_favorites_table
+```
+
+`2` - Edit `app/User.php`
+
+- Using `belongsToMany` eloquent relation
+
+```php
+...
+public function favorites()
+{
+    $this->belongsToMany(Question::class, 'favorites')->withTimestamps();
+    // $this->belongsToMany(Question::class, 'favorites', 'author_id', 'question_id'); // when column names are optionally named
+}
+...
+```
+
+`3` - Edit `app/Question.php`
+
+```php
+...
+public function favorites()
+{
+    return $this->belongsToMany(User::class, 'favorites')->withTimestamps();
+    // $this->belongsToMany(User::class, 'favorites', 'some_id', 'user_id'); // when column names are optionally named
+}
+...
+```
+
+<a name="section-4"></a>
+
+## Episode-39 Favoriting The Question - Part 2 of 4
+
+`1` - Edit `app/Question.php`
+
+```php
+...
+public function getIsFavoritedAttribute()
+{
+    return $this->isFavorited();
+}
+
+public function getFavoritesCountAttribute()
+{
+    return $this->favorites->count();
+}
+
+protected function isFavorited()
+{
+    return $this->favorites()->where('user_id', auth()->id())->count() > 0;
+}
+...
+```
+
+<a name="section-5"></a>
+
+## Episode-40 Favoriting The Question - Part 3 of 4
+
+`1` - Create new seeder file `UsersQuestionsAnswersTableSeeder`
+
+```command
+php artisan make:seeder UsersQuestionsAnswersTableSeeder
+```
+
+`2` - Edit `database/seeds/UsersQuestionsAnswersTableSeeder.php`
+
+```php
+<?php
+
+use App\User;
+use App\Answer;
+use App\Question;
+use Illuminate\Database\Seeder;
+use Illuminate\Support\Facades\DB;
+
+class UsersQuestionsAnswersTableSeeder extends Seeder
+{
+    public function run()
+    {
+        DB::table('answers')->delete();
+        DB::table('questions')->delete();
+        DB::table('users')->delete();
+        factory(User::class, 3)->create()->each(function ($user) {
+            $user->questions()
+                ->saveMany(
+                    factory(Question::class, rand(3, 5))->make()
+                )
+                ->each(function ($question) {
+                    $question->answers()
+                        ->saveMany(
+                            factory(Answer::class, rand(1, 5))->make()
+                        );
+                });
+        });
+    }
+}
+```
+
+`3` - Create new seeder file `FavoritesTableSeeder`
+
+```command
+php artisan make:seeder FavoritesTableSeeder
+```
+
+`4` - Edit `database/seeds/FavoritesTableSeeder.php`
+
+```php
+<?php
+
+use App\User;
+use App\Question;
+use Illuminate\Database\Seeder;
+use Illuminate\Support\Facades\DB;
+
+class FavoritesTableSeeder extends Seeder
+{
+    public function run()
+    {
+        DB::table('favorites')->delete();
+        $users = User::pluck('id')->all();
+        $numberOfUsers = count($users);
+        foreach (Question::all() as $question) {
+            for ($i = 0; $i < rand(1, $numberOfUsers); $i++) {
+                $user = $users[$i];
+                $question->favorites()->attach($user);
+            }
+        }
+    }
+}
+```
+
+`5` - Edit `database/seeds/DatabaseSeeder.php`
+
+```php
+...
+public function run()
+{
+    $this->call([
+        UsersQuestionsAnswersTableSeeder::class,
+        FavoritesTableSeeder::class
+    ]);
+}
+...
+```
+
+`6` - Run artisan command for seeding single seeder file
+
+```command
+php artisan db:seed --class=FavoritesTabelSeeder
+```
+
+`7` - Edit `resources/views/questions/show.blade.php`
+
+- displaying favorites count
+
+```php
+...
+<span class="favorites-count">{ { $question->favorites_count } }</span>
+...
+```
+
+<a name="section-6"></a>
+
+## Episode-41 Favoriting The Question - Part 4 of 4
+
+`1` - Edit `routes/web.php`
+
+```php
+...
+Route::post('/questions/{question}/favrites', 'FavoritesController@store')->name('questions.favorite');
+Route::delete('/questions/{question}/favrites', 'FavoritesController@destroy')->name('questions.unfavorite');
+...
+```
+
+`2` - Create new controller FavoritesController
+
+```command
+php artisan make:controller FavoritesController
+```
+
+`3` - Edit `app/Http/Controllers/FavoritesController.php`
+
+```php
+<?php
+
+namespace App\Http\Controllers;
+
+use App\Question;
+use Illuminate\Http\Request;
+
+class FavoritesController extends Controller
+{
+    public function __construct()
+    {
+        $this->middleware('auth');
+    }
+
+    public function store(Question $question)
+    {
+        $question->favorites()->attach(auth()->id());
+
+        return back();
+    }
+
+    public function destroy(Question $question)
+    {
+        $question->favorites()->detach(auth()->id());
+        return back();
+    }
+}
+```
+
+`4` - Edit `resources/views/questions/show.blade.php`
+
+```php
+...
+<a title="Click to mark favorite question (Click agan to undo)" class="favorite mt-2
+{ { Auth::guest() ? 'off' : ($question->is_favorited ? 'favorited' : '') } }"
+onclick="event.preventDefault(); document.getElementById('favorite-question-{ { $question->id } }').submit();">
+    <i class="fas fa-star fa-2x"></i>
+    <span class="favorites-count">{ { $question->favorites_count } }</span>
+</a>
+<form id="favorite-question-{ { $question->id } }" method="POST"
+action="/questions/{ { $question->id } }/favorites" style="display:none;">
+@ csrf
+@ if($question->is_favorited)
+    @ method('DELETE');
+@ endif
+...
+```

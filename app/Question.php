@@ -17,11 +17,6 @@ class Question extends Model
         $this->attributes['slug'] = str_slug($value);
     }
 
-    public function user()
-    {
-        return $this->belongsTo(User::class);
-    }
-
     public function getUrlAttribute()
     {
         return route("questions.show", $this->slug);
@@ -48,14 +43,39 @@ class Question extends Model
         return \Parsedown::instance()->text($this->body);
     }
 
+    public function acceptBestAnswer($answer)
+    {
+        $this->best_answer_id = $answer->id;
+        $this->save();
+    }
+
     public function answers()
     {
         return $this->hasMany(Answer::class);
     }
 
-    public function acceptBestAnswer($answer)
+    public function user()
     {
-        $this->best_answer_id = $answer->id;
-        $this->save();
+        return $this->belongsTo(User::class);
+    }
+
+    public function favorites()
+    {
+        return $this->belongsToMany(User::class, 'favorites')->withTimestamps();
+    }
+
+    public function getIsFavoritedAttribute()
+    {
+        return $this->isFavorited();
+    }
+
+    public function getFavoritesCountAttribute()
+    {
+        return $this->favorites->count();
+    }
+
+    protected function isFavorited()
+    {
+        return $this->favorites()->where('user_id', auth()->id())->count() > 0;
     }
 }

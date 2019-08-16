@@ -36,15 +36,31 @@ class User extends Authenticatable
     protected $casts = [
         'email_verified_at' => 'datetime',
     ];
+    /**
+     * User profile url
+     *
+     * @return string
+     */
+    public function getUrlAttribute()
+    {
+        return '#';
+    }
+
+    /**
+     * Getting User's Avatar from www.gravatar.com
+     *
+     * @return string
+     */
+    public function getAvatarAttribute()
+    {
+        $email = $this->email;
+        $size = 32;
+        return "https://www.gravatar.com/avatar/" . md5(strtolower(trim($email))) . "?s=" . $size;
+    }
 
     public function questions()
     {
         return $this->hasMany(Question::class);
-    }
-
-    public function getUrlAttribute()
-    {
-        return '#';
     }
 
     public function answers()
@@ -52,10 +68,8 @@ class User extends Authenticatable
         return $this->hasMany(Answer::class);
     }
 
-    public function getAvatarAttribute()
+    public function favorites()
     {
-        $email = $this->email;
-        $size = 32;
-        return "https://www.gravatar.com/avatar/" . md5(strtolower(trim($email))) . "?s=" . $size;
+        $this->belongsToMany(Question::class, 'favorites')->withTimestamps();
     }
 }
