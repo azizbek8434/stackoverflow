@@ -78,3 +78,66 @@ class AcceptAnswerController extends Controller
 ...
 ```
 
+<a name="section-2"></a>
+
+## Episode-37 Accepting the answer as best answer - Part 2 of 2
+
+`1` - Edit `app/Policies/AnswerPolicy.php`
+
+```php
+...
+public function accept(User $user, Answer $answer)
+    {
+        return $user->id === $answer->question->user_id;
+    }
+...
+```
+
+`2` - Edit `app/Http/Controllers/AcceptAnswerController.php`
+
+```php
+...
+ public function __invoke(Answer $answer)
+    {
+        $this->authorize('accept', $answer);
+       ...
+    }
+...
+```
+
+`3` - Edit `resources/views/answers/_index.blade.php`
+
+```php
+...
+@ can('accept', $answer)
+    // Mark answer button  
+@ else
+    @ if($answer->is_best)
+            <a title="The question owner accepted this answer as best answer" class="{ { $answer->status } } mt-2">
+                <i class="fas fa-check fa-2x"></i>
+            </a>
+    @ endif
+@ endcan
+...
+```
+
+`4` - Edit `app/Answer.php`
+
+```php
+...
+public function getStatusAttribute()
+{
+    return $this->isBest() ? 'vote-accepted' : 'vote-accept';
+}
+
+public function getIsBestAttribute()
+{
+    return $this->isBest();
+}
+
+protected function isBest()
+{
+    return $this->id === $this->question->best_answer_id;
+}
+...
+```
