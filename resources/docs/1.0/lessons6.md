@@ -281,3 +281,51 @@ use VotableTrait;
     @ endif
 </form>
 ```
+
+<a name="section-4"></a>
+
+## Episode-51 Preventing The Application from XSS Attack - Part 1 of 2
+
+`1` -  Edit `resources/views/questions/index.blade.php`
+
+```php
+...
+ <div class="excerpt">
+    { { $question->excerpt } }
+</div>
+...
+```
+
+`2` - Edit `resources/views/questions/show.blade.php`
+
+```php
+...
+//  {!! $question->body_html !!} changed this line to
+    {{ $question->excerpt }}
+```
+
+`3` - Edit `app/Question.php`
+
+```php
+...
+public function getBodyHtmlAttribute()
+{
+    return $this->bodyHtml();
+}
+
+public function getExcerptAttribute()
+{
+    return $this->excerpt(250);
+}
+
+public function excerpt($length)
+{
+    return str_limit(strip_tags($this->bodyHtml()), $length);
+}
+
+public function bodyHtml()
+{
+    return \Parsedown::instance()->text($this->body);
+}
+...
+```
