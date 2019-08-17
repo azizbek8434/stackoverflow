@@ -737,3 +737,132 @@ Route::post('/questions/{question/vote}', 'VoteQuestionController');
 </form>
 ...
 ```
+
+<a name="section-12"></a>
+
+## Episode-47 Voting The Question & Answer - Part 6 of 6
+
+`1` - Create new controller `VoteAnswerController`
+
+```command
+php artisan make:controller VoteAnswerController --invokable
+```
+
+`2` - Edit `routes/web.php`
+
+```php
+...
+Route::post('/answers/{answer}/vote', 'VoteAnswerController');
+...
+```
+
+`3` - Edit `app/Http/Controllers/VoteAnswerController.php`
+
+```php
+<?php
+
+namespace App\Http\Controllers;
+
+use App\Answer;
+use Illuminate\Http\Request;
+
+class VoteAnswerController extends Controller
+{
+    public function __construct()
+    {
+        $this->middleware('auth');
+    }
+
+    public function __invoke(Answer $answer)
+    {
+        $vote = (int) request()->vote;
+
+        auth()->user()->voteAnswer($answer, $vote);
+
+        return back();
+    }
+}
+```
+
+`4` - Edit `app/User.php`
+
+```php
+use App\Answer;
+...
+  public function voteAnswer(Answer $answer, $vote)
+    {
+        $voteAnswers = $this->voteAnswers();
+        if ($voteAnswers->where('votable_id', $answer->id)->exists()) {
+            $voteAnswers->updateExistingPivot($answer, ['vote' => $vote]);
+        } else {
+            $voteAnswers->attach($answer, ['vote' => $vote]);
+        }
+        $answer->load('votes');
+
+        $upVotes = (int) $answer->upVotes()->sum('vote');
+
+        $downVotes = (int) $answer->downVotes()->sum('vote');
+
+        $answer->votes_count = $upVotes + $downVotes;
+
+        $answer->save();
+    }
+...
+```
+
+`5` - Edit `app/Answer.php`
+
+```php
+...
+public function upVotes()
+{
+    return $this->votes()->wherePivot('vote', 1);
+}
+
+public function downVotes()
+{
+    return $this->votes()->wherePivot('vote', -1);
+}
+...
+```
+
+`6` - Edit `database/seeds/VotablesTableSeeder.php`
+
+```php
+use App\Answer;
+...
+ DB::table('votables')->delete();
+ ...
+foreach (Answer::all() as $answer) {
+    for ($i = 0; $i < rand(1, $numberOfUser); $i++) {
+        $user = $users[$i];
+        $user->voteAnswer($answer, $votes[rand(0, 1)]);
+    }
+}
+```
+
+`7` - Edit `resources/views/answers/_index.blade.php`
+
+```php
+...
+ <a title="This answer is useful" class="vote-up
+{ { Auth::guest() ? 'off' : '' } }" 
+onclick="event.preventDefault(); document.getElementById('vote-up-answer-{ { $answer->id } }').submit();">
+    <i class="fas fa-caret-up fa-3x"></i>
+</a>
+<form id="vote-up-answer-{ { $answer->id } }" method="POST" action="/answers/{ { $answer->id } }/vote" style="display:none;">
+    @ csrf
+    <input type="hidden" name="vote" value="1">
+</form>
+<span class="vote-count">{ { $answer->votes_count } }</span>
+<a title="This answer is not useful" class="vote-down
+{ { Auth::guest() ? 'off' : '' } }" 
+onclick="event.preventDefault(); document.getElementById('vote-down-answer-{ { $answer->id } }').submit();">
+    <i class="fas fa-caret-down fa-3x"></i>
+</a>
+<form id="vote-down-answer-{ { $answer->id } }" method="POST" action="/answers/{ { $answer->id } }/vote" style="display:none;">
+    @ csrf
+    <input type="hidden" name="vote" value="-1">
+</form>
+...
+```
