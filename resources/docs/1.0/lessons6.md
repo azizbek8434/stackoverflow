@@ -332,7 +332,7 @@ public function bodyHtml()
 
 <a name="section-5"></a>
 
-## Episode-51 Preventing The Application from XSS Attack - Part 2 of 2
+## Episode-52 Preventing The Application from XSS Attack - Part 2 of 2
 
 `1` - Installing `mewebstudio/Purifier`
 
@@ -376,5 +376,65 @@ public function getBodyHtmlAttribute()
 {
     return clean(\Parsedown::instance()->text($this->body));
 }
+...
+```
+
+<a name="section-6"></a>
+
+## Episode-53 Miscellaneous
+
+`1` - Edit `routes/web.php`
+
+```php
+...
+Route::get('/', 'QuestionController@index');
+...
+```
+
+`2` - Edit `app/Providers/RouteServiceProvider.php`
+
+```php
+...
+public function boot()
+{
+    Route::bind('slug', function ($slug) {
+        return Question::with(['answers.user', 'answers' => function ($query) {
+            $query->orderBy('votes_count', 'DESC');
+        }])->where('slug', $slug)->first() ?? abort(404);
+    });
+    ...
+}
+...
+```
+
+second way ordering answers by votes_count => Edit `app/Question.php`
+
+```php
+...
+public function answers()
+{
+    return $this->hasMany(Answer::class)->orderBy('votes_count', 'DESC');
+}
+...
+```
+
+`3` - Edit `resources/views/answers/_index.blade.php`
+
+```php
+@ if($answersCount > 0 )
+    ...
+@ endif
+```
+
+`4` - Edit `resources/views/questions/index.blade.php`
+
+```php
+@ forelse($questions as $question)
+...
+@ empty
+<div class="alert alert-warning">
+    <strong>Sorry</strong> There are no questions available.
+</div>
+@ endforelse
 ...
 ```
