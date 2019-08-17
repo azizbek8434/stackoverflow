@@ -14,4 +14,8 @@
 
 - ## Building Vote Control System
 
-    - [Episodes 36-45](/{{route}}/{{version}}/lessons5)
+    - [Episodes 36-47](/{{route}}/{{version}}/lessons5)
+
+- ## Code Refactoring & Misc
+
+    - [Episodes 48-54](/{{route}}/{{version}}/lessons6)
