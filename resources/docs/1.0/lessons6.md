@@ -300,8 +300,8 @@ use VotableTrait;
 
 ```php
 ...
-//  {!! $question->body_html !!} changed this line to
-    {{ $question->excerpt }}
+//  { !! $question->body_html !! } changed this line to
+    { { $question->excerpt } }
 ```
 
 `3` - Edit `app/Question.php`
@@ -326,6 +326,55 @@ public function excerpt($length)
 public function bodyHtml()
 {
     return \Parsedown::instance()->text($this->body);
+}
+...
+```
+
+<a name="section-5"></a>
+
+## Episode-51 Preventing The Application from XSS Attack - Part 2 of 2
+
+`1` - Installing `mewebstudio/Purifier`
+
+```command
+composer require mews/purifier
+```
+
+`2` - Configuration purifier, publish config command
+
+```command
+php artisan vendor:publish --provider="Mews\Purifier\PurifierServiceProvider"
+```
+
+`3` - Edit `app/Question.php`
+
+- using purifier package's helper `clean`
+
+```php
+...
+public function getBodyHtmlAttribute()
+{
+    return clean($this->bodyHtml());
+}
+...
+```
+
+second way using `clean` helper is create new `setBodyAttribute`
+
+```php
+// public function setBodyAttibute($value)
+// {
+//     $this->attributes['body'] = clean($value);
+// }
+```
+
+`4` - Edit `app/Answer.php`
+
+```php
+...
+public function getBodyHtmlAttribute()
+{
+    return clean(\Parsedown::instance()->text($this->body));
 }
 ...
 ```
