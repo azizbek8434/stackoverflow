@@ -159,3 +159,125 @@ use VotableTrait;
 </div>
 ...
 ```
+
+<a name="section-3"></a>
+
+## Episode-50 Refactoring The Views - Part 2 of 2
+
+`1` - Edit `resources/views/questions/show.blade.php`
+
+```php
+...
+ <div class="media">
+    @ include('shared._vote',[
+        'model' => $question
+    ])
+    ...
+</div>
+...
+```
+
+`2` - Edit `resources/views/answers/_index.blade.php`
+
+```php
+...
+ <div class="media">
+    @ include('shared._vote',[
+        'model' => $answer
+    ])
+    ...
+</div>
+...
+```
+
+`3` - Create new file `_vote.blade.php` into `resources/views/shared`
+
+`4` - Create new file `_favorite.blade.php` into `resources/views/shared`
+
+`5` - Create new file `_accept.blade.php` into `resources/views/shared`
+
+`6` - Edit `resources/views/shared/_vote.blade.php`
+
+```php
+@ if($model instanceof App\Question)
+    @ php
+        $name = 'question';
+        $firstUriSegment = 'questions';
+    @ endphp
+@ elseif($model instanceof App\Answer)
+    @ php
+        $name = 'answer';
+        $firstUriSegment = 'answers';
+    @ endphp
+@ endif
+@ php
+    $formId = $name .'-'.$model->id;
+    $formAction = "/{$firstUriSegment}/{$model->id}/vote"
+@ endphp
+<div class="d-flex flex-column vote-controls">
+    <a title="This question is useful" class="vote-up { { Auth::guest() ? 'off' : '' } }"
+        onclick="event.preventDefault(); document.getElementById('vote-up-{ { $formId } }').submit();">
+        <i class="fas fa-caret-up fa-3x"></i>
+    </a>
+    <form id="vote-up-{ { $formId } }" method="POST" action="{ { $formAction } }" style="display:none;">
+        @ csrf
+        <input type="hidden" name="vote" value="1">
+    </form>
+    <span class="vote-count">{ { $model->votes_count } }</span>
+    <a title="This question is not useful" class="vote-down { { Auth::guest() ? 'off' : '' } }"
+        onclick="event.preventDefault(); document.getElementById('vote-down-{ { $formId } }').submit();">
+        <i class="fas fa-caret-down fa-3x"></i>
+    </a>
+    <form id="vote-down-{ { $formId } }" method="POST" action="{ { $formAction } }" style="display:none;">
+        @ csrf
+        <input type="hidden" name="vote" value="-1">
+    </form>
+    @ if($model instanceof App\Question)
+        @ include('shared._favorite',[
+    'model' => $model
+    ])
+    @ elseif($model instanceof App\Answer)
+        @ include('shared._accept',[
+    'model' => $model
+    ])
+    @ endif
+</div>
+```
+
+`7` - Edit `resources/views/shared/_accept.blade.php`
+
+```php
+@ can('accept', $model)
+<a title="Mark this answer as best answer" class="{ { $model->status } } mt-2"
+    onclick="event.preventDefault(); document.getElementById('accept-answer-{ { $model->id } }').submit();">
+    <i class="fas fa-check fa-2x"></i>
+</a>
+<form id="accept-answer-{ { $model->id } }" method="POST"
+    action="{ { route('answers.accept', $model->id) } }" style="display:none;">
+    @ csrf
+</form>
+@ else
+    @ if($model->is_best)
+        <a title="The question owner accepted this answer as best answer" class="{ { $model->status } } mt-2">
+            <i class="fas fa-check fa-2x"></i>
+        </a>
+    @ endif
+@ endcan
+```
+
+`8` - Edit `resources/views/shared/_favorite.blade.php`
+
+```php
+<a title="Click to mark favorite question (Click agan to undo)" class="favorite mt-2 
+{ { Auth::guest() ? 'off' : ($model->is_favorited ? 'favorited' : '') } }" onclick="event.preventDefault(); document.getElementById('favorite-question-{ { $model->id } }').submit();">
+    <i class="fas fa-star fa-2x"></i>
+    <span class="favorites-count">{ { $model->favorites_count } }</span>
+</a>
+<form id="favorite-question-{ { $model->id } }" method="POST"
+    action="/questions/{ { $model->id } }/favorites" style="display:none;">
+    @ csrf
+    @ if($model->is_favorited)
+        @ method('DELETE');
+    @ endif
+</form>
+```
