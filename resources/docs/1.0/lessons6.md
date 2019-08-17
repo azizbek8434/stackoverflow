@@ -104,3 +104,58 @@ use VotableTrait;
 ...
 }
 ```
+
+<a name="section-2"></a>
+
+## Episode-49 Refactoring The Views - Part 1 of 2
+
+`1` - Edit `resources/views/answers/_index.blade.php`
+
+```php
+...
+<div class="col-4 justify-content-center align-self-end">
+    @ include('shared._author', [
+        'model' => $answer,
+        'label' => 'Answered'
+    ])
+</div>
+...
+```
+
+`2` - Create new folder `shared` into `resources/views`
+
+`3` - Create new file `_author.blade.php` into `resources/views/shared`
+
+`4` - Edit `resources/views/shared/_author.blade.php`
+
+```php
+<span class="text-muted">{ { $label . ": " . $model->created_date } }</span>
+<div class="media mt-2">
+    <a href="{ { $model->user->url } }" class="pr-2">
+        <img src="{ { $model->user->avatar } }" alt="avatar">
+    </a>
+    <div class="media-body mt-1">
+        <a href="{ { $model->user->url } }">{ { $model->user->name } }</a>
+    </div>
+</div>
+```
+
+`5` - Edit `resources/views/questions/show.blade.php`
+
+```php
+...
+<div class="media-body">
+    { !! $question->body_html !! }
+    <div class="row">
+        <div class="col-4"></div>
+        <div class="col-4"></div>
+        <div class="col-4">
+            @ include('shared._author',[
+                'model' => $question,
+                'label' => 'Asked'
+            ])
+        </div>
+    </div>
+</div>
+...
+```
