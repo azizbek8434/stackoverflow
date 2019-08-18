@@ -438,3 +438,151 @@ public function answers()
 @ endforelse
 ...
 ```
+
+<a name="section-7"></a>
+
+## Episode-54 Tidying up our views
+
+`1` - Edit `resources/views/answers/_index.blade.php`
+
+```php
+@ if($answersCount > 0 )
+<div class="row mt-4">
+    <div class="col-md-12">
+        <div class="card">
+            @ include('layouts._message')
+            <div class="card-body">
+                <div class="card-title">
+                    <h2>{ { $answersCount ." ". str_plural("Answer", $answersCount) } }</h2>
+                </div>
+                <hr>
+                @ foreach ($answers as $answer)
+                    @ include('answers._answer')
+                @ endforeach
+            </div>
+        </div>
+    </div>
+</div>
+@ endif
+```
+
+`2` - Create new file `_answer.blade.php` into `resources/views/answers`
+
+`3` - Edit `resources/views/answers/_answer.blade.php`
+
+```php
+<div class="media post">
+    @ include('shared._vote',[
+        'model' => $answer
+    ])
+    <div class="media-body">
+        { !! $answer->body_html !! }
+        <div class="row d-flex">
+            <div class="col-4 justify-content-center align-self-end">
+                <div class="ml-auto">
+                    @ can('update', $answer)
+                    <a href="{ { route('questions.answers.edit', [$question->id, $answer->id]) } }"
+                        class="btn btn-outline-info btn-sm">Edit</a>
+                    @ endcan
+                    @ can('delete', $answer)
+                    <form class="form-delete" method="post"
+                        action="{ { route('questions.answers.destroy', [$question->id, $answer->id]) } }">
+                        @ method('DELETE')
+                        @ csrf
+                        <button type="submit" class="btn btn-outline-danger btn-sm"
+                            onclick="return confirm('Are you sure?')">Delete</button>
+                    </form>
+                    @ endcan
+                </div>
+            </div>
+            <div class="col-4"></div>
+            <div class="col-4 justify-content-center align-self-end">
+                @ include('shared._author', [
+                    'model' => $answer,
+                    'label' => 'Answered'
+                ])
+            </div>
+        </div>
+    </div>
+</div>
+```
+
+`4` - Edit `resources/sass/app.scss`
+
+```css
+...
+.post {
+    padding: 20px 0;
+
+    &:not(:last-child) {
+        border-bottom: 1px solid rgba($black, .1);
+    }
+}
+...
+```
+
+`5` - Edit `resources/views/questions/index.blade.php`
+
+```php
+...
+@ forelse($questions as $question)
+    @ include('questions._question')
+@ empty
+<div class="alert alert-warning">
+        <strong>Sorry</strong> There are no questions available.
+</div>
+@ endforelse
+...
+```
+
+`6` - Create new file `_question.blade.php` into `resources/views/questions`
+
+`7` - Edit `resources/views/questions/_question.blade.php`
+
+```php
+<div class="media post">
+    <div class="d-flex flex-column counters">
+        <div class="vote">
+            <strong>{ { $question->votes_count } }</strong> { { str_plural('vote', $question->votes_count) } }
+        </div>
+        <div class="status { { $question->status } }">
+            <strong>{ { $question->answers_count } }</strong> { { str_plural('answer', $question->answers_count) } }
+        </div>
+        <div class="view">
+            { { $question->views ." ". str_plural('view', $question->views) } }
+        </div>
+    </div>
+    <div class="media-body">
+        <div class="d-flex line-items-center">
+            <h3 class="mt-0">
+                <a href="{ { $question->url } }">{ { $question->title } }</a>
+            </h3>
+            <div class="ml-auto">
+                @ can('update', $question)
+                <a href="{ { route('questions.edit', $question->id) } }" class="btn btn-outline-info btn-sm">Edit</a>
+                @ endcan
+                @ can('delete', $question)
+                <form class="form-delete" method="post" action="{ { route('questions.destroy', $question->id) } }">
+                    @ method('DELETE')
+                    @ csrf
+                    <button type="submit" class="btn btn-outline-danger btn-sm"
+                        onclick="return confirm('Are you sure?')">Delete</button>
+                </form>
+                @ endcan
+            </div>
+        </div>
+
+        <p class="lead">
+            Asked by
+            <a href="{ { $question->user->url } }">{ { $question->user->name } }</a>
+            <span class="text-muted">
+                { { $question->created_date } }
+            </span>
+        </p>
+        <div class="excerpt">
+            { { $question->excerpt } }
+        </div>
+    </div>
+</div>
+```
+
