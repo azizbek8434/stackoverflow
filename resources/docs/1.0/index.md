@@ -19,3 +19,7 @@
 - ## Code Refactoring & Misc
 
     - [Episodes 48-54](/{{route}}/{{version}}/lessons6)
+
+- ## VueJs Integration
+
+    - [Episodes 55-64](/{{route}}/{{version}}/lessons7)

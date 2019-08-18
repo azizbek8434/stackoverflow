@@ -24,10 +24,7 @@
             </div>
             <div class="col-4"></div>
             <div class="col-4 justify-content-center align-self-end">
-                @include('shared._author', [
-                    'model' => $answer,
-                    'label' => 'Answered'
-                ])
+                <user-info :model="{{ $answer }}" label="Answered"></user-info>
             </div>
         </div>
     </div>

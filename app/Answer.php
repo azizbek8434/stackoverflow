@@ -8,6 +8,9 @@ use Illuminate\Database\Eloquent\Model;
 class Answer extends Model
 {
     use VotableTrait;
+
+    protected $appends = ['created_date'];
+
     protected $fillable = ['body', 'user_id'];
 
     public static function boot()
