@@ -296,3 +296,51 @@ public function __invoke(Answer $answer)
 }
 ...
 ```
+
+
+<a name="section-5"></a>
+
+## Episode-69 Rewriting The Authorization Logic - Part 1 of 2 (Core authorization)
+
+`1` - Create new file `policies.js` into `resources/js`
+
+```js
+export default {
+    modify(user, model) {
+        return user.id === model.user_id;
+    },
+    accept(user, answer) {
+        return user.id === answer.question.user_id;
+    }
+}
+```
+
+`2` - Edit `resources/js/app.js`
+
+```js
+...
+import policies from './policies'
+
+Vue.prototype.authorize = function (policy, model) {
+    if (!window.Auth.signedIn) return false;
+    if (typeof policy === 'string' && typeof model === 'object') {
+        const user = window.Auth.user;
+        return policies[policy](user, model);
+    }
+}
+...
+```
+
+`3` - Edit `resources/js/components/Accept.vue`
+
+```js
+...
+computed: {
+  canAccept() {
+    return this.authorize("accept", this.answer);
+  },
+  ...
+}
+...
+```
+
