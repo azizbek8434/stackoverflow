@@ -30,8 +30,13 @@ export default {
           this.editing = false;
         })
         .catch(errors => {
-          console.log(errors.body[0]);
+          alert(errors.response.data.message);
         });
+    }
+  },
+  computed: {
+    isInvalid() {
+      return this.body.length < 10;
     }
   }
 };

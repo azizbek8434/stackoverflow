@@ -3761,8 +3761,13 @@ __webpack_require__.r(__webpack_exports__);
         _this.bodyHtml = response.data.body_html;
         _this.editing = false;
       })["catch"](function (errors) {
-        console.log(errors.body[0]);
+        alert(errors.response.data.message);
       });
+    }
+  },
+  computed: {
+    isInvalid: function isInvalid() {
+      return this.body.length < 10;
     }
   }
 });

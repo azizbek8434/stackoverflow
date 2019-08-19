@@ -6,10 +6,10 @@
     <div class="media-body">
         <form v-if="editing" @submit.prevent="update">
             <div class="form-group">
-                <textarea  class="form-control" v-model="body" rows="10"></textarea>
+                <textarea  class="form-control" v-model="body" rows="10" required></textarea>
             </div>
             <div class="form-group">
-                <button type="submit" class="btn btn-outline-primary">Update</button>
+                <button type="submit" class="btn btn-outline-primary" :disabled="isInvalid">Update</button>
                 <button type="button" class="btn btn-outline-default" @click="cancel">Cancel</button>
             </div>
         </form>

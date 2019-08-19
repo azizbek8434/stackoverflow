@@ -340,3 +340,33 @@ public function update(Request $request, Question $question, Answer $answer)
 }
 ...
 ```
+
+<a name="section-7"></a>
+
+## Episode-61 Creating Vue Answer Component - Part 5 of 5 (Validation)
+
+`1` - Edit `resources/js/components/Answer.vue`
+
+```js
+...
+computed: {
+  isInvalid() {
+    return this.body.length < 10;
+  }
+}
+...
+```
+
+`2` - Edit `resources/views/answers/_answer.blade.php`
+
+- add `required` to texarea input
+
+- bind button `disabled` property with `isInvalid` method
+
+```php
+...
+<textarea  class="form-control" v-model="body" rows="10" required></textarea>
+...
+<button type="submit" class="btn btn-outline-primary" :disabled="isInvalid">Update</button>
+...
+```
