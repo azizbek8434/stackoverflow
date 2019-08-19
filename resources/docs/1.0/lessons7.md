@@ -521,3 +521,83 @@ methods: {
 },
 ...
 ```
+
+<a name="section-10"></a>
+
+## Episode-64 Favorite Component - Part 1 of 3 (Form button to Vue.js Component)
+
+
+`1` - Create new file `Favorite.vue` into `resources/js/components`
+
+`2` - Edit `resources/js/components/Favorite.vue`
+
+```html
+<template>
+  <a title="Click to mark favorite question (Click agan to undo)" :class="classes">
+    <i class="fas fa-star fa-2x"></i>
+    <span class="favorites-count">{ { count } }</span>
+  </a>
+</template>
+<script>
+export default {
+  props: ["question"],
+  data() {
+    return {
+      isFavorited: this.question.is_favorited,
+      count: this.question.favorite_count,
+      signedIn: true
+    };
+  },
+  computed: {
+    classes() {
+      return [
+        "favorite",
+        "mt-2",
+        !this.signedIn
+          ? "off"
+          : () => {
+              if (this.isFavorited) return "favorited";
+              else return "";
+            }
+      ];
+    }
+  }
+};
+</script>
+```
+
+`3` - Edit `resources/js/app.js`
+
+```js
+...
+Vue.component('favorite-component', require('./components/Favorite.vue').default);
+...
+```
+
+`4` - Edit `app/Question.php`
+
+- add `appends` array `is_favorited` and `favorites_count` accessors
+
+```php
+...
+protected $appends = ['created_date', 'is_favorited', 'favorites_count'];
+...
+```
+
+`5` - Edit `resources/views/shared/_vote.blade.php`
+
+```php
+...
+@ include('shared._favorite',[
+  'model' => $model
+  ])
+...
+```
+
+change to
+
+```php
+...
+<favorite-component :question="{ { $model } }"></favorite-component>
+...
+```

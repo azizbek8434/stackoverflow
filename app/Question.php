@@ -9,7 +9,7 @@ class Question extends Model
 {
     use VotableTrait;
 
-    protected $appends = ['created_date'];
+    protected $appends = ['created_date', 'is_favorited', 'favorites_count'];
 
     protected $fillable = [
         'title',
