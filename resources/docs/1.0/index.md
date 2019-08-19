@@ -23,3 +23,4 @@
 - ## VueJs Integration
 
     - [Episodes 55-64](/{{route}}/{{version}}/lessons7)
+    - [Episodes 65-74](/{{route}}/{{version}}/lessons8)
