@@ -189,12 +189,12 @@ Vue.component('answer-component', require('./components/Answer.vue').default);
 ...
 <form v-if="editing"> 
   Edit answer form
-  <button @ click="editing = false">Update</button>
+  <button @click="editing = false">Update</button>
 </form>
 <div v-else>
   ...
 @ can('update', $answer)
-  <a @ click.prevent="editing = true" class="btn btn-outline-info btn-sm">Edit</a>
+  <a @click.prevent="editing = true" class="btn btn-outline-info btn-sm">Edit</a>
 @ endcan
   ...
 </div>
@@ -232,14 +232,14 @@ export default {
   </div>
   <div class="form-group">
       <button type="submit" class="btn btn-outline-primary">Update</button>
-      <button type="button" class="btn btn-outline-default" @ click="cancel">Cancel</button>
+      <button type="button" class="btn btn-outline-default" @click="cancel">Cancel</button>
   </div>
 </form>
 <div v-else>
   <div v-html="bodyHtml"></div>
   ...
       @ can('update', $answer)
-      <a @ click.prevent="edit"
+      <a @click.prevent="edit"
           class="btn btn-outline-info btn-sm">Edit</a>
       @ endcan
       ...
@@ -393,7 +393,7 @@ change to
 
 ```php
 ...
-  <button @ click="destroy" class="btn btn-outline-danger btn-sm">Delete</button>
+  <button @click="destroy" class="btn btn-outline-danger btn-sm">Delete</button>
 ...
 ```
 

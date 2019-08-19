@@ -1,6 +1,11 @@
 <template>
   <div>
-    <a title="Mark this answer as best answer" :class="classes" v-if="canAccept">
+    <a
+      title="Mark this answer as best answer"
+      :class="classes"
+      v-if="canAccept"
+      @click.prevent="create"
+    >
       <i class="fas fa-check fa-2x"></i>
     </a>
     <a
@@ -17,7 +22,8 @@ export default {
   props: ["answer"],
   data() {
     return {
-      isBest: this.answer.is_best
+      isBest: this.answer.is_best,
+      id: this.answer.id
     };
   },
   computed: {
@@ -29,6 +35,17 @@ export default {
     },
     classes() {
       return ["mt-2", this.isBest ? "vote-accepted" : "vote-accept"];
+    }
+  },
+  methods: {
+    create() {
+      axios.post(`/answers/${this.id}/accept`).then(res => {
+        this.$toast.success(res.data.message, "Success", {
+          timeout: 3000,
+          position: "bottomLeft"
+        });
+        this.isBest = true;
+      });
     }
   }
 };

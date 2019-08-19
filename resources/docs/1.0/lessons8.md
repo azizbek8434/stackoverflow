@@ -21,7 +21,7 @@
 <template>
   <a title="Click to mark favorite question (Click agan to undo)"
     :class="classes"
-    @ click.prevent="toggle"
+    @click.prevent="toggle"
   >
 ...
 </template>
@@ -234,5 +234,65 @@ change to
 ```php
 ...
 protected $appends = ['created_date', 'body_html', 'is_best'];
+...
+```
+
+<a name="section-4"></a>
+
+## Episode-68 Creating Accept Answer Component - Part 2 of 2 (event handler)
+
+`1` - Edit `resources/js/components/Accept.vue`
+
+- add to button `create` method
+
+```html
+...
+<a title="Mark this answer as best answer"
+  :class="classes"
+  v-if="canAccept"
+  @click.prevent="create"
+>
+...
+```
+
+js part
+
+```js
+...,
+data() {
+  return {
+    isBest: this.answer.is_best,
+    id: this.answer.id
+  };
+},
+...,
+methods: {
+    create() {
+      axios.post(`/answers/${this.id}/accept`).then(res => {
+        this.$toast.success(res.data.message, "Success", {
+          timeout: 3000,
+          position: "bottomLeft"
+        });
+        this.isBest = true;
+      });
+    }
+  }
+...
+```
+
+`2` - Edit `app/Http/Controllers/AcceptAnswerController.phpa`
+
+```php
+...
+public function __invoke(Answer $answer)
+{
+  ...
+    if (request()->expectsJson()) {
+        return response()->json([
+            'message' => 'You have accepted this answer as best answer'
+        ]);
+    }
+  ...
+}
 ...
 ```
