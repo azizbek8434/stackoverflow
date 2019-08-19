@@ -15,7 +15,6 @@ export default {
     return {
       isFavorited: this.question.is_favorited,
       count: this.question.favorites_count,
-      signedIn: true,
       id: this.question.id
     };
   },
@@ -29,6 +28,9 @@ export default {
     },
     endpoint() {
       return `/questions/${this.id}/favorites`;
+    },
+    signedIn() {
+      return window.Auth.signedIn;
     }
   },
   methods: {

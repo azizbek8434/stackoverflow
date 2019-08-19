@@ -115,3 +115,44 @@ public function destroy(Question $question)
 }
 ...
 ```
+
+<a name="section-2"></a>
+
+## Episode-66 Creating Favorite Component - Part 3 of 3 (Authenticating the button)
+
+`1` - `resources/views/layouts/app.blade.php`
+
+```php
+...
+<body>
+...
+<script>
+  window.Auth = {!! json_encode([
+    'signedIn' => Auth::check(),
+    'user' => Auth::user()
+]) !!}
+</script>
+<script src="{{ asset('js/app.js') }}"></script>
+</body>
+...
+```
+
+`2` - Edit `resources/js/components/Favorite.vue`
+
+```js
+...
+data() {
+  return {
+    isFavorited: this.question.is_favorited,
+    count: this.question.favorites_count,
+    id: this.question.id
+  };
+},
+computed: {
+  ...,
+  signedIn() {
+    return window.Auth.signedIn;
+  }
+}
+...
+```

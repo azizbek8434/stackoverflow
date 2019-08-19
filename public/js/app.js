@@ -3827,22 +3827,65 @@ __webpack_require__.r(__webpack_exports__);
 //
 //
 //
+//
+//
+//
+//
 /* harmony default export */ __webpack_exports__["default"] = ({
   props: ["question"],
   data: function data() {
     return {
       isFavorited: this.question.is_favorited,
-      count: this.question.favorite_count,
-      signedIn: true
+      count: this.question.favorites_count,
+      id: this.question.id
     };
   },
   computed: {
     classes: function classes() {
+      return ["favorite", "mt-2", !this.signedIn ? "off" : this.isFavorited ? "favorited" : ""];
+    },
+    endpoint: function endpoint() {
+      return "/questions/".concat(this.id, "/favorites");
+    },
+    signedIn: function signedIn() {
+      return window.Auth.signedIn;
+    }
+  },
+  methods: {
+    toggle: function toggle() {
+      if (!this.signedIn) {
+        this.$toast.warning("Please login to favorite this question", "Warning", {
+          timeout: 3000,
+          position: "bottomLeft"
+        });
+        return;
+      }
+
+      this.isFavorited ? this.destroy() : this.create();
+    },
+    destroy: function destroy() {
       var _this = this;
 
-      return ["favorite", "mt-2", !this.signedIn ? "off" : function () {
-        if (_this.isFavorited) return "favorited";else return "";
-      }];
+      axios["delete"](this.endpoint).then(function (res) {
+        _this.count--;
+        _this.isFavorited = false;
+
+        _this.$toast.success("Removed from favorites", "Success", {
+          timeout: 3000
+        });
+      });
+    },
+    create: function create() {
+      var _this2 = this;
+
+      axios.post(this.endpoint).then(function (res) {
+        _this2.count++;
+        _this2.isFavorited = true;
+
+        _this2.$toast.success("Added to favorites", "Success", {
+          timeout: 3000
+        });
+      });
     }
   }
 });
@@ -41343,7 +41386,13 @@ var render = function() {
     "a",
     {
       class: _vm.classes,
-      attrs: { title: "Click to mark favorite question (Click agan to undo)" }
+      attrs: { title: "Click to mark favorite question (Click agan to undo)" },
+      on: {
+        click: function($event) {
+          $event.preventDefault()
+          return _vm.toggle($event)
+        }
+      }
     },
     [
       _c("i", { staticClass: "fas fa-star fa-2x" }),
