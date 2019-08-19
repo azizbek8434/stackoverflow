@@ -370,3 +370,69 @@ computed: {
 <button type="submit" class="btn btn-outline-primary" :disabled="isInvalid">Update</button>
 ...
 ```
+
+<a name="section-8"></a>
+
+## Episode-62 Ajaxifying The Delete Button
+
+`1` - Edit `resources/views/answers/_answer.blade.php`
+
+```php
+...
+ <form class="form-delete" method="post"
+    action="{ { route('questions.answers.destroy', [$question->id, $answer->id]) } }">
+    @ method('DELETE')
+    @ csrf
+    <button type="submit" class="btn btn-outline-danger btn-sm"
+        onclick="return confirm('Are you sure?')">Delete</button>
+</form>
+...
+```
+
+change to
+
+```php
+...
+  <button @ click="destroy" class="btn btn-outline-danger btn-sm">Delete</button>
+...
+```
+
+`2` - Edit `resources/js/components/Answer.vue`
+
+```js
+methods: {
+...,
+ destroy() {
+      if (confirm("Are you sure?")) {
+        axios.delete(this.endpoint).then(response => {
+          $(this.$el).fadeOut(500, () => {
+            alert(response.data.message);
+          });
+        });
+      }
+    }
+...
+},
+computed: {
+  ...,
+  endpoint() {
+    return `/questions/${this.questionId}/answers/${this.id}`;
+  }
+}
+...
+```
+
+`3` - Edit `app/Http/Controllers/AnswerController.php`
+
+```php
+...
+public function destroy(Question $question, Answer $answer)
+{
+...
+  if (request()->expectsJson()) {
+      return response()->json([
+          'message' => 'Your answer has been removed'
+      ]);
+  }
+...
+```
