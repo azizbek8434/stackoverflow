@@ -297,7 +297,6 @@ public function __invoke(Answer $answer)
 ...
 ```
 
-
 <a name="section-5"></a>
 
 ## Episode-69 Rewriting The Authorization Logic - Part 1 of 2 (Core authorization)
@@ -344,3 +343,75 @@ computed: {
 ...
 ```
 
+<a name="section-6"></a>
+
+## Episode-70 Rewriting The Authorization Logic - Part 2 of 2 (Refactoring)
+
+`1` - Create new folder `authorization` into `resources/js`
+
+`2` - Create new file `authorize.js` into `resources/js/authorization`
+
+`3` - Edit `resources/js/authorization/authorize.js`
+
+```js
+import policies from './policies'
+
+export default {
+    install(Vue, options) {
+        Vue.prototype.authorize = function (policy, model) {
+            if (!window.Auth.signedIn) return false;
+            if (typeof policy === 'string' && typeof model === 'object') {
+                const user = window.Auth.user;
+                return policies[policy](user, model);
+            }
+        }
+        Vue.prototype.signedIn = window.Auth.signedIn;
+    }
+}
+```
+
+`4` - move `resources/js/policies.js` file into `resources/js/authorization`
+
+`5` - Edit `resources/js/app.js`
+
+```js
+require('./bootstrap');
+
+require('./fontawesome')
+
+window.Vue = require('vue');
+
+import VueIziToast from 'vue-izitoast';
+
+import 'izitoast/dist/css/iziToast.min.css';
+
+import Authorization from './authorization/authorize';
+
+Vue.use(VueIziToast);
+Vue.use(Authorization);
+
+Vue.component('user-info', require('./components/UserInfo.vue').default);
+Vue.component('answer-component', require('./components/Answer.vue').default);
+Vue.component('favorite-component', require('./components/Favorite.vue').default);
+Vue.component('accept-component', require('./components/Accept.vue').default);
+
+const app = new Vue({
+    el: '#app',
+});
+```
+
+`6` - Edit `resources/js/components/Favorite.vue`
+
+- Now we don't need to `signedId` method in computed property `delete it`
+
+```js
+...
+computed: {
+  ...,
+  // signedIn() {
+  //   return window.Auth.signedIn;
+  // },
+  ...
+ }
+...
+```
