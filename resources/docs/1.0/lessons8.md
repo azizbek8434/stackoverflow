@@ -127,12 +127,12 @@ public function destroy(Question $question)
 <body>
 ...
 <script>
-  window.Auth = {!! json_encode([
+  window.Auth = { !! json_encode([
     'signedIn' => Auth::check(),
     'user' => Auth::user()
-]) !!}
+]) !! }
 </script>
-<script src="{{ asset('js/app.js') }}"></script>
+  <script src="{ { asset('js/app.js') } }"></script>
 </body>
 ...
 ```
@@ -154,5 +154,85 @@ computed: {
     return window.Auth.signedIn;
   }
 }
+...
+```
+
+<a name="section-3"></a>
+
+## Episode-67 Creating Accept Answer Component - Part 1 of 2 (from button into Vue component)
+
+`1` - Create new `Accept.vue` file into `resources/js/components`
+
+`2` - Edit `resources/js/components/Accept.vue`
+
+```html
+<template>
+  <div>
+    <a title="Mark this answer as best answer"
+      :class="classes"
+      v-if="canAccept">
+      <i class="fas fa-check fa-2x"></i>
+    </a>
+    <a title="The question owner accepted this answer as best answer"
+      :class="classes"
+      v-if="accepted">
+      <i class="fas fa-check fa-2x"></i>
+    </a>
+  </div>
+</template>
+<script>
+export default {
+  props: ["answer"],
+  data() {
+    return {
+      isBest: this.answer.is_best
+    };
+  },
+  computed: {
+    canAccept() {
+      return true;
+    },
+    accepted() {
+      return !this.canAccept && this.isBest;
+    },
+    classes() {
+      return ["mt-2", this.isBest ? "vote-accepted" : "vote-accept"];
+    }
+  }
+};
+</script>
+```
+
+`3` - Edit `resources/js/app.js`
+
+```js
+...
+Vue.component('accept-component', require('./components/Accept.vue').default);
+...
+```
+
+`4` - `resources/views/shared/_vote.blade.php`
+
+```php
+...
+@ include('shared._accept',[
+  'model' => $model
+])
+...
+```
+
+change to
+
+```php
+...
+<accept-component :answer="{ { $model } }"></accept-component>
+...
+```
+
+`5` - Edit `app/Answer.php`
+
+```php
+...
+protected $appends = ['created_date', 'body_html', 'is_best'];
 ...
 ```

@@ -35,8 +35,6 @@
     @if($model instanceof App\Question)
         <favorite-component :question="{{ $model }}"></favorite-component>
     @elseif($model instanceof App\Answer)
-        @include('shared._accept',[
-    'model' => $model
-    ])
+        <accept-component :answer="{{ $model }}"></accept-component>
     @endif
 </div>
